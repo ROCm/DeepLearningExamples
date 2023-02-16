@@ -1,2 +1,0 @@
-pynvml==11.0.0
-git+https://github.com/NVIDIA/dllogger#egg=dllogger
