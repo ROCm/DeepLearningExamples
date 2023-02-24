@@ -1,7 +1,7 @@
-# DCN For TensorFlow 2
+# FwFM For TensorFlow 2
 
-This repository provides a script and recipe to train the Deep Learning Recommendation Model (DCN) which is prot from DLRM.<br>
-DCN: https://arxiv.org/abs/1708.05123
+This repository provides a script and recipe to train the Deep Learning Recommendation Model FwFMs which is port from DLRM.<br>
+DCN: https://arxiv.org/abs/1806.03514
 
 ## Table Of Contents
 
