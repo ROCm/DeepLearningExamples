@@ -534,10 +534,10 @@ def set_affinity(
     Launch the example with:
     python -m torch.distributed.launch --nproc_per_node <#GPUs> example.py
     """
-    #if(gpu_availible=='cuda'):
-    #    pynvml.nvmlInit()
-    #elif(gpu_availible=='rocm'):
-    pyrocmml.rocmmlInit()
+    if(gpu_availible=='cuda'):
+        pynvml.nvmlInit()
+    elif(gpu_availible=='rocm'):
+        pyrocmml.rocmmlInit()
 
     if mode == 'all':
         set_all(gpu_id, nproc_per_node, scope, cores, min_cores, max_cores)
