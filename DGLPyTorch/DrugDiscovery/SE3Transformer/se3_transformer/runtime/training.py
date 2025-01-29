@@ -238,7 +238,7 @@ if __name__ == '__main__':
     torch.set_float32_matmul_precision('high')
     print_parameters_count(model)
     logger.log_hyperparams(vars(args))
-    increase_l2_fetch_granularity()
+    #increase_l2_fetch_granularity()
     train(model,
           loss_fn,
           datamodule.train_dataloader(),
