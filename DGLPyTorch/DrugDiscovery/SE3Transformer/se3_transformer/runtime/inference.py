@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     major_cc, minor_cc = torch.cuda.get_device_capability()
 
-    loggers = [DLLogger(save_dir=args.log_dir, filename=args.dllogger_name)]
+    loggers = [DLLogger(save_dir=args.log_dir, filename='single_gpu_inference_'+args.dllogger_name)]
     if args.wandb:
         loggers.append(WandbLogger(name=f'QM9({args.task})', save_dir=args.log_dir, project='se3-transformer'))
     logger = LoggerCollection(loggers)
