@@ -206,10 +206,14 @@ if __name__ == '__main__':
         logging.info(f'Using seed {args.seed}')
         seed_everything(args.seed)
     name_id = str(args.batch_size)+'_'
-    if is_distributed:
-        loggers = [DLLogger(save_dir=args.log_dir, filename='multi_gpu_train_'+name_id+args.dllogger_name)]
+    if args.amp:
+        amp_str = 'amp'
     else:
-        loggers = [DLLogger(save_dir=args.log_dir, filename='single_gpu_train_'+name_id+args.dllogger_name)]
+        amp_str = ''
+    if is_distributed:
+        loggers = [DLLogger(save_dir=args.log_dir, filename='multi_gpu_train_'+name_id+amp_str+args.dllogger_name)]
+    else:
+        loggers = [DLLogger(save_dir=args.log_dir, filename='single_gpu_train_'+name_id+amp_str+args.dllogger_name)]
     if args.wandb:
         loggers.append(WandbLogger(name=f'QM9({args.task})', save_dir=args.log_dir, project='se3-transformer'))
     logger = LoggerCollection(loggers)
