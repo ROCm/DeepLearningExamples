@@ -90,7 +90,11 @@ def train_epoch(model, train_dataloader, loss_fn, epoch_idx, grad_scaler, optimi
         for callback in callbacks:
             callback.on_batch_start()
 
-        with torch.cuda.amp.autocast(enabled=args.amp):
+        if (args.amp):
+            with torch.cuda.amp.autocast():
+                pred = model(*inputs)
+                loss = loss_fn(pred, target) / args.accumulate_grad_batches
+        else:
             pred = model(*inputs)
             loss = loss_fn(pred, target) / args.accumulate_grad_batches
 
@@ -127,7 +131,7 @@ def train(model: nn.Module,
         model._set_static_graph()
 
     model.train()
-    grad_scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
+    grad_scaler = torch.cuda.amp.GradScaler()
     if args.optimizer == 'adam':
         optimizer = FusedAdam(model.parameters(), lr=args.learning_rate, betas=(args.momentum, 0.999),
                               weight_decay=args.weight_decay)
@@ -201,8 +205,15 @@ if __name__ == '__main__':
     if args.seed is not None:
         logging.info(f'Using seed {args.seed}')
         seed_everything(args.seed)
-
-    loggers = [DLLogger(save_dir=args.log_dir, filename=args.dllogger_name)]
+    name_id = str(args.batch_size)+'_'
+    if args.amp:
+        amp_str = 'amp'
+    else:
+        amp_str = ''
+    if is_distributed:
+        loggers = [DLLogger(save_dir=args.log_dir, filename='multi_gpu_train_'+name_id+amp_str+args.dllogger_name)]
+    else:
+        loggers = [DLLogger(save_dir=args.log_dir, filename='single_gpu_train_'+name_id+amp_str+args.dllogger_name)]
     if args.wandb:
         loggers.append(WandbLogger(name=f'QM9({args.task})', save_dir=args.log_dir, project='se3-transformer'))
     logger = LoggerCollection(loggers)
@@ -234,7 +245,7 @@ if __name__ == '__main__':
     torch.set_float32_matmul_precision('high')
     print_parameters_count(model)
     logger.log_hyperparams(vars(args))
-    increase_l2_fetch_granularity()
+    #increase_l2_fetch_granularity()
     train(model,
           loss_fn,
           datamodule.train_dataloader(),

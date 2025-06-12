@@ -27,8 +27,17 @@ import os
 import pathlib
 import re
 
-import pynvml
+from . import utils
+from . import pyrocmml
 
+gpu_availible = ''
+
+if(utils.check_gpu_availibility() == "cuda"):
+    import pynvml
+    gpu_availible='cuda'
+elif(utils.check_gpu_availibility() == "rocm"):
+    from . import pyrocmml
+    gpu_availible='rocm'
 
 class Device:
     # assume nvml returns list of 64 bit ints
@@ -40,34 +49,50 @@ class Device:
 
     def __init__(self, device_idx):
         super().__init__()
-        self.handle = pynvml.nvmlDeviceGetHandleByIndex(device_idx)
+        if(gpu_availible=='rocm'):
+            self.handle = pyrocmml.rocmDeviceGetHandleByIndex(device_idx)
+        elif(gpu_availible=='cuda'):
+            self.handle = pynvml.nvmlDeviceGetHandleByIndex(device_idx)
 
     def get_name(self):
-        return pynvml.nvmlDeviceGetName(self.handle)
+        if(gpu_availible=='rocm'):
+            return pyrocmml.rocmDeviceGetName(self.handle)
+        elif(gpu_availible=='cuda'):
+            return pynvml.nvmlDeviceGetName(self.handle)
 
     def get_uuid(self):
-        return pynvml.nvmlDeviceGetUUID(self.handle)
+        if(gpu_availible=='rocm'):
+            return pyrocmml.rocmDeviceGetUUID(self.handle)
+        elif(gpu_availible=='cuda'):
+            return pynvml.nvmlDeviceGetUUID(self.handle)
 
     def get_cpu_affinity(self, scope):
-        if scope == 'socket':
-            nvml_scope = pynvml.NVML_AFFINITY_SCOPE_SOCKET
-        elif scope == 'node':
-            nvml_scope = pynvml.NVML_AFFINITY_SCOPE_NODE
-        else:
-            raise RuntimeError('Unknown scope')
+        if gpu_availible=='cuda':
+            if scope == 'socket':
+                nvml_scope = pynvml.NVML_AFFINITY_SCOPE_SOCKET
+            elif scope == 'node':
+                nvml_scope = pynvml.NVML_AFFINITY_SCOPE_NODE
+            else:
+                raise RuntimeError('Unknown scope')
+            affinity_string = ''
+       
+            for j in pynvml.nvmlDeviceGetCpuAffinityWithinScope(
+                self.handle, Device._nvml_affinity_elements, nvml_scope
+            ):
+                # assume nvml returns list of 64 bit ints
+                affinity_string = '{:064b}'.format(j) + affinity_string
 
-        affinity_string = ''
-        for j in pynvml.nvmlDeviceGetCpuAffinityWithinScope(
-            self.handle, Device._nvml_affinity_elements, nvml_scope
-        ):
-            # assume nvml returns list of 64 bit ints
-            affinity_string = '{:064b}'.format(j) + affinity_string
+            
+            affinity_list = [int(x) for x in affinity_string]
+            affinity_list.reverse()  # so core 0 is in 0th element of list
 
-        affinity_list = [int(x) for x in affinity_string]
-        affinity_list.reverse()  # so core 0 is in 0th element of list
+            ret = [i for i, e in enumerate(affinity_list) if e != 0]
+            return ret
 
-        ret = [i for i, e in enumerate(affinity_list) if e != 0]
-        return ret
+        elif gpu_availible=='rocm':
+            numa_node = pyrocmml.rocmDeviceGetCpuAffinityWithinScope(self.handle)
+            return numa_node
+         
 
 
 def get_thread_siblings_list():
@@ -509,7 +534,10 @@ def set_affinity(
     Launch the example with:
     python -m torch.distributed.launch --nproc_per_node <#GPUs> example.py
     """
-    pynvml.nvmlInit()
+    if(gpu_availible=='cuda'):
+        pynvml.nvmlInit()
+    elif(gpu_availible=='rocm'):
+        pyrocmml.rocmmlInit()
 
     if mode == 'all':
         set_all(gpu_id, nproc_per_node, scope, cores, min_cores, max_cores)
