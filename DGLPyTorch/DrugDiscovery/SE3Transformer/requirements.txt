@@ -1,4 +1,5 @@
 e3nn==0.3.3
-wandb==0.12.0
+wandb
 pynvml==11.0.0
+amdsmi
 git+https://github.com/NVIDIA/dllogger#egg=dllogger
