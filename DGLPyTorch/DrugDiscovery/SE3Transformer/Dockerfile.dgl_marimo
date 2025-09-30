@@ -1,0 +1,29 @@
+# "Copyright Advanced Micro Devices, Inc.
+# Licensed under the Apache License Version 2.0"
+
+#############################################################################
+ARG BASE_IMAGE=docker.io/library/dgl_marimo
+FROM ${BASE_IMAGE} AS dgl_marimo
+
+ENV VENV_PATH="/opt/venv"
+ENV PATH="${VENV_PATH}/bin:$PATH"
+
+SHELL ["/bin/bash", "--login", "-c"]
+ENV DGL_SRC_DIR="/src/dgl"
+ENV DEEP_LEARNING_EXAMPLES="/src/DeepLearningExamples"
+
+COPY . ${DEEP_LEARNING_EXAMPLES}
+
+RUN apt-get install amd-smi-lib
+WORKDIR /opt/rocm/share/amd_smi
+RUN ${VENV_PATH}/bin/python  -m pip install .
+RUN ${VENV_PATH}/bin/python -m pip install e3nn wandb
+RUN ${VENV_PATH}/bin/python -m pip install git+https://github.com/NVIDIA/dllogger#egg=dllogger
+
+ENV LD_LIBRARY_PATH="/dockerx/dgl_rocm7/build/:${LD_LIBRARY_PATH}"
+
+
+RUN ${VENV_PATH}/bin/python  -m pip install marimo
+# Set the default command to an interactive bash shell.
+WORKDIR ${DEEP_LEARNING_EXAMPLES}
+CMD ["/bin/bash"]
