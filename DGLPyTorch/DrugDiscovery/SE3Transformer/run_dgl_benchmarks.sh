@@ -10,15 +10,15 @@ echo "DGL version: $(python -c "import dgl; print(dgl.__version__)")" | tee -a $
 
 # Run benchmarks
 export DGLBACKEND=pytorch
-bash scripts/benchmark_train.sh 120 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train.sh 240 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train.sh 120 --amp 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train.sh 240 --amp 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train_multi_gpu.sh 120 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train_multi_gpu.sh 240 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train_multi_gpu.sh 120 --amp 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_train_multi_gpu.sh 240 --amp 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_inference.sh 400 2>&1 | tee -a $LOGFILE
-bash scripts/benchmark_inference.sh 400 --amp 2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train.sh 120 false 2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train.sh 240 false 2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train.sh 120 true  2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train.sh 240 true  2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train_multi_gpu.sh 120 false 2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train_multi_gpu.sh 240 false 2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train_multi_gpu.sh 120 true  2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_train_multi_gpu.sh 240 true  2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_inference.sh 400 false 2>&1 | tee -a $LOGFILE
+bash scripts/benchmark_inference.sh 400 true  2>&1 | tee -a $LOGFILE
 
 echo "Benchmarks completed. Results saved to $LOGFILE"  
