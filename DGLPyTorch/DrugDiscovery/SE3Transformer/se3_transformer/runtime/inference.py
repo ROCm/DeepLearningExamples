@@ -49,7 +49,13 @@ def evaluate(model: nn.Module,
         for callback in callbacks:
             callback.on_batch_start()
 
-        with torch.cuda.amp.autocast(enabled=args.amp):
+        if (args.amp):
+            with torch.amp.autocast('cuda'):
+                pred = model(*input)
+
+                for callback in callbacks:
+                    callback.on_validation_step(input, target, pred)
+        else:
             pred = model(*input)
 
             for callback in callbacks:
@@ -68,6 +74,7 @@ if __name__ == '__main__':
     is_distributed = init_distributed()
     local_rank = get_local_rank()
     args = PARSER.parse_args()
+    print(args)
 
     logging.getLogger().setLevel(logging.CRITICAL if local_rank != 0 or args.silent else logging.INFO)
 
@@ -87,7 +94,12 @@ if __name__ == '__main__':
 
     major_cc, minor_cc = torch.cuda.get_device_capability()
 
-    loggers = [DLLogger(save_dir=args.log_dir, filename=args.dllogger_name)]
+    if args.amp:
+        amp_str = 'amp_'
+    else:
+        amp_str = ''
+
+    loggers = [DLLogger(save_dir=args.log_dir, filename='single_gpu_inference_'+amp_str+args.dllogger_name)]
     if args.wandb:
         loggers.append(WandbLogger(name=f'QM9({args.task})', save_dir=args.log_dir, project='se3-transformer'))
     logger = LoggerCollection(loggers)
@@ -104,7 +116,7 @@ if __name__ == '__main__':
 
     model.to(device=torch.cuda.current_device())
     if args.load_ckpt_path is not None:
-        checkpoint = torch.load(str(args.load_ckpt_path), map_location={'cuda:0': f'cuda:{local_rank}'})
+        checkpoint = torch.load(str(args.load_ckpt_path), map_location={'cuda:0': f'cuda:{local_rank}'}, weights_only=True)
         model.load_state_dict(checkpoint['state_dict'])
 
     if is_distributed:

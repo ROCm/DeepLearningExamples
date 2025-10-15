@@ -128,3 +128,9 @@ def rank_zero_only(fn):
 def using_tensor_cores(amp: bool) -> bool:
     major_cc, minor_cc = torch.cuda.get_device_capability()
     return (amp and major_cc >= 7) or major_cc >= 8
+
+def check_gpu_availibility():
+    if hasattr(torch.version, 'hip'):
+        return "rocm"
+    else:
+        return "cuda"
