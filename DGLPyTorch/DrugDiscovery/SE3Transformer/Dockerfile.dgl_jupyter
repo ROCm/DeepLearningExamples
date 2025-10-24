@@ -1,0 +1,25 @@
+# "Copyright Advanced Micro Devices, Inc.
+# Licensed under the Apache License Version 2.0"
+
+#############################################################################
+ARG BASE_IMAGE=docker.io/library/dgl_marimo #Change this name once the docker containers are publicly released
+FROM ${BASE_IMAGE} AS dgl_marimo
+
+ENV VENV_PATH="/opt/venv"
+ENV PATH="${VENV_PATH}/bin:$PATH"
+
+SHELL ["/bin/bash", "--login", "-c"]
+ENV DGL_SRC_DIR="/src/dgl"
+ENV DEEP_LEARNING_EXAMPLES="/src/DeepLearningExamples"
+
+# Set the default command to an interactive bash shell.
+COPY . ${DEEP_LEARNING_EXAMPLES}
+
+WORKDIR ${DEEP_LEARNING_EXAMPLES}
+RUN pip install --no-cache-dir -r requirements.txt
+ENV LD_LIBRARY_PATH="/src/dgl/build/:${LD_LIBRARY_PATH}"
+
+
+RUN ${VENV_PATH}/bin/python  -m pip install jupyterlab ipykernel bash_kernel
+RUN ${VENV_PATH}/bin/python -m bash_kernel.install
+CMD ["/bin/bash"]
