@@ -19,4 +19,4 @@ ENV LD_LIBRARY_PATH="/src/dgl/build/:${LD_LIBRARY_PATH}"
 
 RUN pip install jupyter jupyterlab plotly torchinfo rdkit py3Dmol
 # Run JupyterLab
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+#CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
