@@ -14,7 +14,7 @@ TASK=homo
 python -m se3_transformer.runtime.training \
   --amp "$AMP" \
   --batch_size "$BATCH_SIZE" \
-  --epochs 10 \
+  --epochs "$NUM_EPOCHS" \
   --lr "$LEARNING_RATE" \
   --weight_decay "$WEIGHT_DECAY" \
   --use_layer_norm \
@@ -22,4 +22,4 @@ python -m se3_transformer.runtime.training \
   --save_ckpt_path model_qm9.pth \
   --precompute_bases \
   --seed 42 \
-  --task gap
+  --task "$TASK"

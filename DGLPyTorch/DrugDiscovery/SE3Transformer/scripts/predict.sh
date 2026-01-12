@@ -12,8 +12,8 @@ TASK=homo
 python -m torch.distributed.run --nnodes=1 --nproc_per_node=gpu --max_restarts 0 --module \
   se3_transformer.runtime.inference \
   --amp "$AMP" \
-  --batch_size 1 \
+  --batch_size "$BATCH_SIZE" \
   --use_layer_norm \
   --norm \
   --load_ckpt_path model_qm9.pth \
-  --task gap
+  --task "$TASK"

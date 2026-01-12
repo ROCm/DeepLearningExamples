@@ -25,7 +25,6 @@ from typing import List
 
 import torch
 import torch.nn as nn
-import dgl
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -42,7 +41,6 @@ def evaluate(model: nn.Module,
              dataloader: DataLoader,
              callbacks: List[BaseCallback],
              args):
-    print("I am inside evaluate")
     model.eval()
     for i, batch in tqdm(enumerate(dataloader), total=len(dataloader), unit='batch', desc=f'Evaluation',
                          leave=False, disable=(args.silent or get_local_rank() != 0)):
@@ -54,57 +52,12 @@ def evaluate(model: nn.Module,
         if (args.amp):
             with torch.amp.autocast('cuda'):
                 pred = model(*input)
-                  # ---- Demo print for the first batch only ----
-                if i == 0 and get_local_rank() == 0:
-                    print("\n===== DEMO: Single Batch =====")
-                    for idx, x in enumerate(input):
-                        print(f"\nINPUT[{idx}] type: {type(x)}")
-                        if isinstance(x, torch.Tensor):
-                            print("  Tensor shape:", x.shape)
-                            print("  Tensor dtype:", x.dtype)
-                            #print("  First 3 elements:", x[:3] if x.numel() >= 3 else x)
-                            print("  First 3 elements:", x)
-                        elif isinstance(x, dgl.DGLGraph):
-                            print("  DGLGraph properties:")
-                            print("    num nodes:", x.num_nodes())
-                            print("    num edges:", x.num_edges())
-                            # print all available node and edge features
-                            if x.ndata:
-                                print("    node features keys:", list(x.ndata.keys()))
-                                for key, val in x.ndata.items():
-                                    print(f"      {key}: shape {val.shape}, dtype {val.dtype}")
-                            if x.edata:
-                                print("    edge features keys:", list(x.edata.keys()))
-                                for key, val in x.edata.items():
-                                    print(f"      {key}: shape {val.shape}, dtype {val.dtype}")
-                        elif isinstance(x, dict):
-                            print("  Dict input keys:", list(x.keys()))
-                            for key, val in x.items():
-                                if isinstance(val, torch.Tensor):
-                                    print(f"    {key}: shape {val.shape}, dtype {val.dtype}")
-                                else:
-                                    print(f"    {key}: {val}")
-                        else:
-                            print("  Unknown input type:", type(x))
 
-                    # Print target and prediction
-                    if isinstance(target, torch.Tensor):
-                        #print("\nTARGET (first 3 elements):", target[:min(3, len(target))].detach().cpu())
-                        print("\nTARGET (first 3 elements):", target.detach().cpu())
-                    else:
-                        print("\nTARGET:", target)
-
-                    if isinstance(pred, torch.Tensor):
-                        #print("PRED (first 3 elements):", pred[:min(3, len(pred))].detach().cpu())
-                        print("PRED (first 3 elements):", pred.detach().cpu())
-                    else:
-                        print("PRED:", pred)
-
-                    print("==============================\n")
                 for callback in callbacks:
                     callback.on_validation_step(input, target, pred)
         else:
             pred = model(*input)
+
             for callback in callbacks:
                 callback.on_validation_step(input, target, pred)
 
@@ -151,40 +104,6 @@ if __name__ == '__main__':
         loggers.append(WandbLogger(name=f'QM9({args.task})', save_dir=args.log_dir, project='se3-transformer'))
     logger = LoggerCollection(loggers)
     datamodule = QM9DataModule(**vars(args))
-    # ADD THIS BLOCK
-    loader = datamodule.test_dataloader()
-    dataset = loader.dataset
-    graph, target = dataset[0]
-
-    print("\n===== DATASET[0] GRAPH DETAILS =====")
-
-    print("\n--- BASIC INFO ---")
-    print("Nodes:", graph.num_nodes())
-    print("Edges:", graph.num_edges())
-
-    print("\n--- NODE DATA (ndata) ---")
-    for key, value in graph.ndata.items():
-        print(f"Key: {key}")
-        print("  shape:", value.shape)
-        print("  dtype:", value.dtype)
-        # print first few rows only
-        #print("  first 3 entries:\n", value[:3])
-        print("  first 3 entries:\n", value)
-
-    print("\n--- EDGE DATA (edata) ---")
-    for key, value in graph.edata.items():
-        print(f"Key: {key}")
-        print("  shape:", value.shape)
-        print("  dtype:", value.dtype)
-        # print first few rows only
-        #print("  first 3 entries:\n", value[:3])
-        print("  first 3 entries:\n", value)
-
-    print("\n--- TARGET ---")
-    print("Shape:", target.shape)
-    print("Value:", target)
-
-    print("===============================\n")
     model = SE3TransformerPooled(
         fiber_in=Fiber({0: datamodule.NODE_FEATURE_DIM}),
         fiber_out=Fiber({0: args.num_degrees * args.num_channels}),
@@ -210,7 +129,6 @@ if __name__ == '__main__':
 
     test_dataloader = datamodule.test_dataloader() if not args.benchmark else datamodule.train_dataloader()
     if not args.benchmark:
-        print("Line before evaluate&&&&")
         evaluate(model,
                  test_dataloader,
                  callbacks,
