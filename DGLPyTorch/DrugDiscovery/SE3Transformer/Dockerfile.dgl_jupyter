@@ -2,7 +2,7 @@
 # Licensed under the Apache License Version 2.0"
 
 #############################################################################
-ARG BASE_IMAGE=rocm/dgl:latest
+ARG BASE_IMAGE=rocm/dgl:dgl-2.4.0.amd0_rocm7.0.0_ubuntu22.04_py3.10_pytorch_2.7.1
 FROM ${BASE_IMAGE} AS dgl
 
 SHELL ["/bin/bash", "--login", "-c"]
